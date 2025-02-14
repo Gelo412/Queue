@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Queue System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/7.14.1-0/firebase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+
+  
+</head>
+<body>
+  <form id="studentForm" onsubmit="addStudent(event)">
+    <h2>Fill out the form to get your queue number</h2>
+    
+    <div class="input-group">
+      <label for="name">Full Name <span class="asterisk">*</span></label>
+      <input type="text" id="name" placeholder="Enter your Full Name" required>
+    </div>
+
+    <div class="input-group">
+      <label for="section">Section <span class="asterisk">*</span></label>
+      <input type="text" id="section" placeholder="Enter your Section" required>
+    </div>
+
+    <div class="input-group">
+      <label for="email">Email <span class="asterisk">*</span></label>
+      <input type="email" id="email" placeholder="Enter your Email" required>
+    </div>
+
+    <div class="input-group">
+      <label for="concern">Concern <span class="asterisk">*</span></label>
+      <input type="text" id="concern" placeholder="Enter your Concern (e.g., TF, SOG, Uniform etc.)" required>
+    </div>
+
+    <button type="submit">Add to Queue</button>
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+
+    <div id="message" class="message"></div>
+  </form>
+  <footer>
+    &copy; 2025 GRP2 Enterprise. All rights reserved.
+  </footer>
+</body>
+</html>
