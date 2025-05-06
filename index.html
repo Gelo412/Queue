@@ -1,47 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registrar Queue System</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/7.14.1-0/firebase.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js"></script>
-
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClubConnect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
 </head>
-<body>
-  <form id="studentForm" onsubmit="addStudent(event)">
-    <h2>Fill out the form to get your queue number</h2>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-4 relative">
+    <!-- Title Section -->
+    <div class="flex justify-center mb-4">
+      <div>
+        <h1 class="text-4xl font-bold text-center text-indigo-600">ClubConnect</h1>
+        <p class="text-center mt-2 text-gray-700">Manage your student clubs efficiently!</p>
+      </div>
+    </div>
+  
+    <!-- Admin Login Button positioned at the upper right -->
+    <a href="admin-login.html" class="absolute top-4 right-4 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Login Admin</a>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="container mx-auto mt-8">
+    <div class="flex justify-center mb-4">
+      <button id="clubsTab" class="tab-button px-4 py-2 bg-indigo-500 text-white rounded-l-lg focus:outline-none">Available Clubs</button>
+      <button id="eventsTab" class="tab-button px-4 py-2 bg-indigo-500 text-white focus:outline-none">Upcoming Events</button>
+      <button id="announcementsTab" class="tab-button px-4 py-2 bg-indigo-500 text-white rounded-r-lg focus:outline-none">Announcements</button>
+    </div>
+
+    <div id="clubsSection" class="tab-content">
+      <h2 class="text-2xl font-semibold mb-4">Available Clubs</h2>
+      <div id="club-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 z-10">
+        <!-- Clubs will be inserted here -->
+      </div>
+    </div>
+
+    <div id="eventsSection" class="tab-content">
+      <h2 class="text-2xl font-semibold mb-4">Upcoming Events</h2>
+      <div id="event-list" class="space-y-4">
+        <!-- Events will be inserted here -->
+      </div>
+    </div>
+
+    <div id="announcementsSection" class="tab-content">
+      <h2 class="text-2xl font-semibold mb-4">Announcements</h2>
+      <div id="announcement-list" class="space-y-4">
+        <!-- Announcements will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Club Form Modal -->
+  <div id="addClubForm" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center transition-all duration-300 ease-in-out opacity-0 z-50">
+    <div class="bg-white rounded-lg p-6 w-96 transform scale-90 transition-all duration-300 ease-in-out">
+      <h2 class="text-xl font-semibold mb-4">Add a Club</h2>
+      <form id="clubForm">
+        <input id="clubName" type="text" placeholder="Club Name" class="w-full mb-2 p-2 border rounded" required />
+        <textarea id="clubDesc" placeholder="Description" rows="4" class="w-full mb-2 p-2 border rounded resize-none" required></textarea>
+        <div class="flex justify-end gap-2">
+          <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Event Form -->
+  <div id="addEventForm" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center transition-all duration-300 ease-in-out opacity-0 z-50">
+    <div class="bg-white rounded-lg p-6 w-96 transform scale-90 transition-all duration-300 ease-in-out">
+      <h2 class="text-xl font-semibold mb-4">Add an Event</h2>
+      <form id="eventForm">
+        <input id="eventTitle" type="text" placeholder="Event Title" class="w-full mb-2 p-2 border rounded" required />
+        <textarea id="eventDesc" placeholder="Event Description" rows="4" class="w-full mb-2 p-2 border rounded resize-none" required></textarea>
+        <input id="eventDate" type="date" class="w-full mb-2 p-2 border rounded" required />
+        <select id="clubSelectEvent" class="w-full mb-2 p-2 border rounded">
+          <!-- Clubs will be added dynamically -->
+        </select>
+        <div class="flex justify-end gap-2">
+          <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">Add Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Announcement Form -->
+  <div id="addAnnouncementForm" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center transition-all duration-300 ease-in-out opacity-0 z-50">
+    <div class="bg-white rounded-lg p-6 w-96 transform scale-90 transition-all duration-300 ease-in-out">
+      <h2 class="text-xl font-semibold mb-4">Add an Announcement</h2>
+      <form id="announcementForm">
+        <input id="announcementTitle" type="text" placeholder="Announcement Title" class="w-full mb-2 p-2 border rounded" required />
+        <textarea id="announcementDesc" placeholder="Announcement Content" rows="4" class="w-full mb-2 p-2 border rounded resize-none" required></textarea>
+        <select id="clubSelectAnnouncement" class="w-full mb-2 p-2 border rounded">
+          <!-- Clubs will be added dynamically -->
+        </select>
+        <div class="flex justify-end gap-2">
+          <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">Add Announcement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="fixed bottom-4 right-4 w-80 z-50">
+    <div class="bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+      <div class="bg-indigo-500 text-white px-4 py-2 font-semibold flex justify-between items-center">
+        <span>Club Chat Admin</span>
+        <button id="toggleChat" class="text-sm">_</button>
+      </div>
+      <div id="chatBox" class="h-64 overflow-y-scroll p-4 bg-white rounded flex flex-col"></div>
+      <div class="flex mt-2">
+        <input id="chatInput" type="text" class="flex-grow p-2 border rounded-l" placeholder="Type a message...">
+        <button id="sendChat" class="bg-blue-500 text-white px-4 rounded-r">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, serverTimestamp, onSnapshot ,query ,orderBy} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import {getAuth, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6PJpEiuKdgkpgcEM9ailtGHnjjOHs3xo",
+      authDomain: "eventease-7c191.firebaseapp.com",
+      projectId: "eventease-7c191",
+      storageBucket: "eventease-7c191.appspot.com",
+      messagingSenderId: "588839225138",
+      appId: "1:588839225138:web:dcd89095e511f6d03a392b",
+      measurementId: "G-ZM75C772PY"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    // Fetch Clubs and populate select options for Events and Announcements
+    async function fetchClubs() {
+      const clubList = document.getElementById("club-list");
+      const clubsSnapshot = await getDocs(collection(db, "clubs"));
+      const clubSelectEvent = document.getElementById("clubSelectEvent");
+      const clubSelectAnnouncement = document.getElementById("clubSelectAnnouncement");
+
+      clubsSnapshot.forEach((doc) => {
+        const club = doc.data();
+        const clubDiv = document.createElement("div");
+        clubDiv.classList.add("bg-white", "p-4", "rounded-lg", "shadow-md");
+        clubDiv.innerHTML = `
+          <h3 class="text-xl font-semibold">${club.name}</h3>
+          <p class="text-gray-600">${club.description}</p>
+        `;
+
+        clubList.appendChild(clubDiv);
+
+        // Add clubs to select options for events and announcements
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.textContent = club.name;
+
+        clubSelectEvent.appendChild(option);
+        clubSelectAnnouncement.appendChild(option.cloneNode(true));
+      });
+    }
+
+    // Add Club to Firestore
+    document.getElementById("clubForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const clubName = document.getElementById("clubName").value;
+      const clubDesc = document.getElementById("clubDesc").value;
+
+      try {
+        await addDoc(collection(db, "clubs"), {
+          name: clubName,
+          description: clubDesc,
+        });
+        alert("Club added!");
+        document.getElementById("clubName").value = "";
+        document.getElementById("clubDesc").value = "";
+        fetchClubs(); // Refresh the club list
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    // Add Event to Firestore
+    document.getElementById("eventForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const eventTitle = document.getElementById("eventTitle").value;
+      const eventDesc = document.getElementById("eventDesc").value;
+      const eventDate = document.getElementById("eventDate").value;
+      const clubId = document.getElementById("clubSelectEvent").value;
+
+      try {
+        await addDoc(collection(db, "events"), {
+          title: eventTitle,
+          description: eventDesc,
+          date: eventDate,
+          clubId: clubId,
+        });
+        alert("Event added!");
+        fetchEvents(); // Refresh events
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    // Add Announcement to Firestore
+    document.getElementById("announcementForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const announcementTitle = document.getElementById("announcementTitle").value;
+      const announcementDesc = document.getElementById("announcementDesc").value;
+      const clubId = document.getElementById("clubSelectAnnouncement").value;
+
+      try {
+        await addDoc(collection(db, "announcements"), {
+          title: announcementTitle,
+          content: announcementDesc,
+          clubId: clubId,
+          createdAt: new Date() // Adding a proper timestamp
+        });
+        alert("Announcement added!");
+        fetchAnnouncements(); // Refresh announcements
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    /// Fetch Events for the upcoming events section
+    async function fetchEvents() {
+      const eventList = document.getElementById("event-list");
+      eventList.innerHTML = ""; // Clear previous events
+
+      const eventsSnapshot = await getDocs(collection(db, "events"));
+      
+      eventsSnapshot.forEach((doc) => {
+        const event = doc.data();
+
+        // Convert startDate and endDate to human-readable format
+        const startDate = new Date(event.startDate);
+        const endDate = new Date(event.endDate);
+
+        // Format dates to 'dd/mm/yyyy'
+        const formattedStartDate = startDate.toLocaleDateString('en-GB');
+        const formattedEndDate = endDate.toLocaleDateString('en-GB');
+
+        const eventDiv = document.createElement("div");
+        eventDiv.classList.add("bg-white", "p-4", "rounded-lg", "shadow-md");
+        eventDiv.innerHTML = `
+          <h3 class="text-xl font-semibold">${event.title}</h3>
+          <p class="text-gray-600">Start Date: ${formattedStartDate}</p>
+          <p class="text-gray-600">End Date: ${formattedEndDate}</p>
+          <p class="text-gray-600">${event.content}</p>
+        `;
+
+        eventList.appendChild(eventDiv);
+      });
+    }
+
+    // Fetch Announcements for specific clubs
+    async function fetchAnnouncements() {
+    const announcementList = document.getElementById("announcement-list");
+    announcementList.innerHTML = ""; // Clear previous announcements
+    const announcementsSnapshot = await getDocs(collection(db, "announcements"));
+
+    announcementsSnapshot.forEach((doc) => {
+      const announcement = doc.data();
+
+      // Log the entire document data to inspect the structure
+      console.log("Document Data:", announcement);
+
+      const dateCreated = announcement.dateCreated; // 'dateCreated' field is the ISO string
+      let createdDate = 'Unknown Date';
+
+      if (dateCreated) {
+        // Convert the 'dateCreated' string to a JavaScript Date object
+        const dateObj = new Date(dateCreated);
+        if (!isNaN(dateObj)) {
+          createdDate = dateObj.toLocaleDateString(); // Format the date
+        } else {
+          console.log("Invalid 'dateCreated' format:", dateCreated);
+        }
+      }
+
+      const announcementDiv = document.createElement("div");
+      announcementDiv.classList.add("bg-white", "p-4", "rounded-lg", "shadow-md");
+      announcementDiv.innerHTML = `
+        <h3 class="text-xl font-semibold">${announcement.title}</h3>
+        <p class="text-gray-600">${announcement.content}</p>
+        <p class="text-sm text-gray-500">Created on: ${createdDate}</p>
+      `;
+      announcementList.appendChild(announcementDiv);
+    });
+  }
+    // Switch between tabs
+    document.getElementById("clubsTab").addEventListener("click", () => switchTab("clubs"));
+    document.getElementById("eventsTab").addEventListener("click", () => switchTab("events"));
+    document.getElementById("announcementsTab").addEventListener("click", () => switchTab("announcements"));
+
+    function switchTab(tab) {
+      // Hide all sections
+      document.querySelectorAll(".tab-content").forEach((content) => {
+        content.classList.remove("active");
+      });
+
+      // Remove 'active' class from all tabs
+      document.querySelectorAll(".tab-button").forEach((btn) => {
+        btn.classList.remove("bg-indigo-600");
+      });
+
+      // Show the selected section
+      document.getElementById(`${tab}Section`).classList.add("active");
+
+      // Highlight the selected tab
+      document.getElementById(`${tab}Tab`).classList.add("bg-indigo-600");
+    }
+
+    // Initialize the page by fetching the data
+    fetchClubs();
+    fetchEvents();
+    fetchAnnouncements();
+
+    // Set the default tab
+    switchTab("clubs");
+
+
+    const chatInput = document.getElementById("chatInput");
+    const sendChat = document.getElementById("sendChat");
+    const chatBox = document.getElementById("chatBox");
+    const toggleChat = document.getElementById("toggleChat");
+
+    // Toggle chat visibility
+    toggleChat.addEventListener("click", () => {
+      chatBox.classList.toggle("hidden");
+    });
+
+    // Send user message
+    sendChat.addEventListener("click", async () => {
+      const message = chatInput.value.trim();
+      if (message) {
+        await addDoc(collection(db, "messages"), {
+          sender: "User", // Add sender info to distinguish user and admin
+          text: message,
+          timestamp: new Date()
+        });
+        chatInput.value = "";
+      }
+    });
+
+    // Real-time updates of chat messages
+    const q = query(collection(db, "messages"), orderBy("timestamp"));
+
+    onSnapshot(q, (snapshot) => {
+      chatBox.innerHTML = ""; // Clear chatBox before rendering new messages
+
+      snapshot.forEach(doc => {
+        const chat = doc.data();
+        const isAdmin = chat.sender === "Admin";
+
+        // Create wrapper div with alignment for alternating messages
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("flex", "mb-2", isAdmin ? "justify-start" : "justify-end");
+
+        // Create the message bubble
+        const bubble = document.createElement("div");
+        bubble.classList.add("p-2", "rounded-lg", "max-w-xs", "whitespace-pre-wrap");
+
+        // Style based on sender
+        if (isAdmin) {
+          bubble.classList.add("bg-gray-200", "text-black");
+        } else {
+          bubble.classList.add("bg-blue-500", "text-white");
+        }
+
+        // Create the sender label span (which will be hidden)
+        const senderLabel = document.createElement("span");
+        senderLabel.textContent = `${chat.sender}: `;
+        senderLabel.style.display = "none"; // Hide the sender label
+
+        // Add sender label and text to the bubble
+        bubble.innerHTML = `<strong>${senderLabel.outerHTML}</strong>${chat.text}`;
+
+        // Append the bubble to the message div
+        msgDiv.appendChild(bubble);
+
+        // Append the message div to the chatBox
+        chatBox.appendChild(msgDiv);
+      });
+
+      // Scroll to the bottom to show the latest message
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+
+
+              
+
     
-    <div class="input-group">
-      <label for="name">Full Name <span class="asterisk">*</span></label>
-      <input type="text" id="name" placeholder="Enter your Full Name" required>
-    </div>
-
-    <div class="input-group">
-      <label for="section">Section <span class="asterisk">*</span></label>
-      <input type="text" id="section" placeholder="Enter your Section" required>
-    </div>
-
-    <div class="input-group">
-      <label for="email">Email <span class="asterisk">*</span></label>
-      <input type="email" id="email" placeholder="Enter your Email" required>
-    </div>
-
-    <div class="input-group">
-      <label for="concern">Concern <span class="asterisk">*</span></label>
-      <input type="text" id="concern" placeholder="Enter your Concern (e.g., TF, SOG, Uniform etc.)" required>
-    </div>
-
-    <button type="submit">Add to Queue</button>
-    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
-
-    <div id="message" class="message"></div>
-  </form>
-  <footer>
-    &copy; 2025 GRP2 Enterprise. All rights reserved.
-  </footer>
+  </script>
 </body>
 </html>
