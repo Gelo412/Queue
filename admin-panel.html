@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome for Icons -->
+  <script src="https://kit.fontawesome.com/b31b72720c.js" crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-100">
+
+  <!-- Sidebar -->
+  <div id="sidebar" class="w-72 bg-indigo-800 text-white h-full fixed left-0 top-0 flex flex-col transition-all duration-300 ease-in-out transform -translate-x-full">
+    <div class="p-5 border-b">
+      <h2 class="text-2xl font-bold">Admin Panel</h2>
+    </div>
+  
+    <nav class="mt-6 flex-1"> <!-- Make nav grow -->
+      <ul class="space-y-4">
+        <li>
+          <a href="#announcement" class="flex items-center py-3 px-6 hover:bg-indigo-700 rounded-md transition group">
+            <i class="fas fa-bullhorn mr-3"></i> <!-- Announcement Icon -->
+            <span class="sidebar-text">Announcements</span>
+          </a>
+        </li>
+        <li>
+          <a href="#event" class="flex items-center py-3 px-6 hover:bg-indigo-700 rounded-md transition group">
+            <i class="fas fa-calendar-alt mr-3"></i> <!-- Event Icon -->
+            <span class="sidebar-text">Events</span>
+          </a>
+        </li>
+        <li>
+          <a href="#club" class="flex items-center py-3 px-6 hover:bg-indigo-700 rounded-md transition group">
+            <i class="fas fa-users mr-3"></i> <!-- Club Icon -->
+            <span class="sidebar-text">Add Club</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  
+    <button id="logoutBtn" class="flex items-center py-3 px-6 bg-red-500 hover:bg-red-600 rounded-md transition m-4">
+      <i class="fas fa-sign-out-alt mr-3"></i> <!-- Logout Icon -->
+      <span>Logout</span>
+    </button>
+  </div>
+
+  <!-- Sidebar Toggle Button (Positioned beside the Sidebar) -->
+  <button id="toggleSidebarBtn" class="text-black p-2 fixed top-0 left-0 ml-0 rounded-full transition-all duration-300 ease-in-out z-20">
+    <i id="hamburgerIcon" class="fas fa-bars"></i>
+  </button>
+
+  <!-- Main Content -->
+  <div class="ml-0 transition-all duration-300 ease-in-out p-8" id="mainContent">
+    <!-- Announcement Section -->
+    <div id="announcement" class="mb-10">
+      <h3 class="text-3xl font-bold mb-4">Post Announcement</h3>
+      <input id="announcementTitle" type="text" placeholder="Title" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      <textarea id="announcementContent" placeholder="Content" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+      <button id="postAnnouncementBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md font-semibold transition">Post Announcement</button>
+
+      <!-- Announcement List -->
+      <div id="announcementList" class="mt-4">
+        <!-- Announcements will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Event Section -->
+    <div id="event" class="hidden">
+      <h3 class="text-3xl font-bold mb-4">Post Upcoming Event</h3>
+      
+      <label for="eventTitle" class="block text-gray-700 font-semibold mb-2">Event Title</label>
+      <input id="eventTitle" type="text" placeholder="Event Title" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+      
+      <label for="eventDateStart" class="block text-gray-700 font-semibold mb-2">Date Started</label>
+      <input id="eventDateStart" type="date" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+      
+      <label for="eventDateEnd" class="block text-gray-700 font-semibold mb-2">Date Ended</label>
+      <input id="eventDateEnd" type="date" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+      
+      <label for="eventContent" class="block text-gray-700 font-semibold mb-2">Event Details</label>
+      <textarea id="eventContent" placeholder="Event Details" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"></textarea>
+      
+      <button id="postEventBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md font-semibold transition">Post Event</button>
+
+      <div id="eventList" class="mt-4">
+        <!-- Events will be loaded here -->
+      </div>
+
+    </div>
+
+    <!-- Add Club Section -->
+    <div id="club" class="hidden">
+      <h3 class="text-3xl font-bold mb-4">Add Club</h3>
+      <input id="clubName" type="text" placeholder="Club Name" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      <textarea id="clubDescription" placeholder="Club Description" class="w-full mb-4 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"></textarea>
+      <button id="postClubBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-md font-semibold transition">Post Club</button>
+    </div>
+  </div>
+
+  <!-- Firebase and Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6PJpEiuKdgkpgcEM9ailtGHnjjOHs3xo",
+      authDomain: "eventease-7c191.firebaseapp.com",
+      projectId: "eventease-7c191",
+      storageBucket: "eventease-7c191.appspot.com",
+      messagingSenderId: "588839225138",
+      appId: "1:588839225138:web:dcd89095e511f6d03a392b",
+      measurementId: "G-ZM75C772PY"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Check if user is logged in
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "admin-login.html"; // Redirect if not logged in
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      signOut(auth).then(() => {
+        window.location.href = "admin-login.html";
+      }).catch((error) => {
+        alert(error.message);
+      });
+    });
+
+    // Show the correct section based on navigation click
+    const announcementLink = document.querySelector('a[href="#announcement"]');
+    const eventLink = document.querySelector('a[href="#event"]');
+    const clubLink = document.querySelector('a[href="#club"]');
+
+    announcementLink.addEventListener('click', () => {
+      document.getElementById('announcement').classList.remove('hidden');
+      document.getElementById('event').classList.add('hidden');
+      document.getElementById('club').classList.add('hidden');
+    });
+
+    eventLink.addEventListener('click', () => {
+      document.getElementById('announcement').classList.add('hidden');
+      document.getElementById('event').classList.remove('hidden');
+      document.getElementById('club').classList.add('hidden');
+    });
+
+    clubLink.addEventListener('click', () => {
+      document.getElementById('announcement').classList.add('hidden');
+      document.getElementById('event').classList.add('hidden');
+      document.getElementById('club').classList.remove('hidden');
+    });
+
+    // Sidebar open state
+    let isSidebarOpen = false;
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const hamburgerIcon = document.getElementById('hamburgerIcon');
+
+    toggleSidebarBtn.addEventListener('click', () => {
+      isSidebarOpen = !isSidebarOpen;
+
+      sidebar.classList.toggle('-translate-x-full');
+      mainContent.classList.toggle('ml-0');
+      mainContent.classList.toggle('ml-72');
+      toggleSidebarBtn.classList.toggle('ml-0');
+      toggleSidebarBtn.classList.toggle('ml-72');
+
+      // Set the correct icon
+      if (isSidebarOpen) {
+        hamburgerIcon.classList.remove('fa-bars');
+        hamburgerIcon.classList.add('fa-times');
+      } else {
+        hamburgerIcon.classList.remove('fa-times');
+        hamburgerIcon.classList.add('fa-bars');
+      }
+    });
+
+    // Initialize layout on load
+    window.addEventListener('load', () => {
+      if (window.innerWidth >= 768) {
+        sidebar.classList.remove('-translate-x-full');
+        mainContent.classList.add('ml-72');
+        toggleSidebarBtn.classList.add('ml-72');
+        isSidebarOpen = true;
+
+        // Set correct icon on load
+        hamburgerIcon.classList.remove('fa-bars');
+        hamburgerIcon.classList.add('fa-times');
+      }
+    });
+    // Show the event posting section
+    document.getElementById('postEventBtn').addEventListener('click', async () => {
+      const title = document.getElementById('eventTitle').value.trim();
+      const startDate = document.getElementById('eventDateStart').value.trim();
+      const endDate = document.getElementById('eventDateEnd').value.trim();
+      const content = document.getElementById('eventContent').value.trim();
+
+      if (title === "" || startDate === "" || endDate === "" || content === "") {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      try {
+        // Add new event to Firestore with start and end dates as timestamps
+        const docRef = await addDoc(collection(db, "events"), { 
+          title, 
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+          content, 
+          timestamp: Date.now()
+        });
+
+        alert("Event posted!");
+        document.getElementById('eventTitle').value = '';
+        document.getElementById('eventDateStart').value = '';
+        document.getElementById('eventDateEnd').value = '';
+        document.getElementById('eventContent').value = '';
+        loadEvents(); // Reload the events list after posting
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    // Post Event
+    document.getElementById('postEventBtn').addEventListener('click', async () => {
+      const title = document.getElementById('eventTitle').value.trim();
+      const startDate = document.getElementById('eventDateStart').value.trim();
+      const endDate = document.getElementById('eventDateEnd').value.trim();
+      const content = document.getElementById('eventContent').value.trim();
+
+      if (title === "" || startDate === "" || endDate === "" || content === "") {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      try {
+        // Add new event to Firestore
+        const docRef = await addDoc(collection(db, "events"), { 
+          title, 
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+          content, 
+          timestamp: Date.now()
+        });
+
+        alert("Event posted!");
+        document.getElementById('eventTitle').value = '';
+        document.getElementById('eventDateStart').value = '';
+        document.getElementById('eventDateEnd').value = '';
+        document.getElementById('eventContent').value = '';
+        loadEvents(); // Reload the events list
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    // Load Events
+    const loadEvents = async () => {
+      const querySnapshot = await getDocs(collection(db, "events"));
+      const eventList = document.getElementById('eventList');
+      
+      eventList.innerHTML = ''; // Clear current list of events
+
+      console.log("Events loaded:", querySnapshot.size); // Check how many events are returned
+
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        console.log("Loaded Event:", data); // Log the event data to check if it’s correctly fetched
+
+        const div = document.createElement('div');
+        div.classList.add('border', 'p-4', 'mb-4', 'rounded');
+        div.innerHTML = `
+          <h4 class="font-semibold">${data.title}</h4>
+          <p>${data.content}</p>
+          <p><strong>Start Date:</strong> ${new Date(data.startDate).toLocaleDateString()}</p>
+          <p><strong>End Date:</strong> ${new Date(data.endDate).toLocaleDateString()}</p>
+          <button onclick="deleteEvent('${doc.id}')">Delete</button>
+        `;
+        eventList.appendChild(div);
+      });
+    };
+
+    // Delete Event
+    window.deleteEvent = async (id) => {
+      const isConfirmed = confirm("Are you sure you want to delete this event?");
+      if (isConfirmed) {
+        try {
+          // Delete the event document from Firestore
+          await deleteDoc(doc(db, "events", id));
+
+          // Reload events after deletion
+          alert("Event deleted!");
+          loadEvents(); // Reload the event list
+        } catch (error) {
+          alert("Error deleting event: " + error.message);
+        }
+      }
+    };
+
+    // Load Events when the page loads
+    window.onload = loadEvents; // This ensures events are loaded when the page is accessed
+
+
+    // Post Announcement
+    document.getElementById('postAnnouncementBtn').addEventListener('click', async () => {
+      const title = document.getElementById('announcementTitle').value.trim();
+      const content = document.getElementById('announcementContent').value.trim();
+
+      if (title === "" || content === "") {
+        alert("Please fill out both the title and content.");
+        return;
+      }
+
+      try {
+        // Add new document to Firestore
+        const docRef = await addDoc(collection(db, "announcements"), { 
+          title, 
+          content, 
+          dateCreated: new Date().toISOString(), // Timestamp of creation
+          timestamp: Date.now()
+        });
+        alert("Announcement posted!");
+        document.getElementById('announcementTitle').value = '';
+        document.getElementById('announcementContent').value = '';
+        loadAnnouncements(); // Reload the announcements list
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    // Load Announcements
+    const loadAnnouncements = async () => {
+      const querySnapshot = await getDocs(collection(db, "announcements"));
+      const announcementList = document.getElementById('announcementList');
+      announcementList.innerHTML = ''; // Clear current list
+
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement('div');
+        div.classList.add('border', 'p-4', 'mb-4', 'rounded');
+        div.innerHTML = `
+          <h4 class="font-semibold">${data.title}</h4>
+          <p>${data.content}</p>
+          <p class="text-sm text-gray-500">Created on: ${new Date(data.dateCreated).toLocaleDateString()}</p>
+          <button onclick="deleteAnnouncement('${doc.id}')">Delete</button>
+        `;
+        announcementList.appendChild(div);
+      });
+    };
+
+    // Delete Announcement
+    window.deleteAnnouncement = async (id) => {
+      try {
+        // Delete the announcement document
+        await deleteDoc(doc(db, "announcements", id));
+        alert("Announcement deleted!");
+        loadAnnouncements(); // Reload the announcements list
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+
+    // Load Announcements when the page loads
+    window.onload = loadAnnouncements; // This ensures announcements are loaded when the page is accessed
+
+    // Post Club
+    document.getElementById('postClubBtn').addEventListener('click', async () => {
+      const clubName = document.getElementById('clubName').value.trim();
+      const clubDescription = document.getElementById('clubDescription').value.trim();
+
+      if (clubName === "" || clubDescription === "") {
+        alert("Please fill out both the club name and description.");
+        return;
+      }
+
+      try {
+        // Add new club document to Firestore
+        const docRef = await addDoc(collection(db, "clubs"), {
+          name: clubName,
+          description: clubDescription,
+          dateCreated: new Date().toISOString(), // Timestamp of creation
+          timestamp: Date.now(),
+        });
+
+        alert("Club posted successfully!");
+        // Optionally, clear the form after posting
+        document.getElementById('clubName').value = '';
+        document.getElementById('clubDescription').value = '';
+      } catch (error) {
+        alert("Error posting club: " + error.message);
+      }
+    });
+
+     // Show the messages section
+    const messageLink = document.createElement('li');
+    messageLink.innerHTML = `
+      <a href="#messages" class="flex items-center py-3 px-6 hover:bg-indigo-700 rounded-md transition group">
+        <i class="fas fa-comments mr-3"></i>
+        <span class="sidebar-text">Messages</span>
+      </a>
+    `;
+    document.querySelector('nav ul').appendChild(messageLink);
+
+    // Show Messages section logic
+    messageLink.addEventListener('click', () => {
+      document.getElementById('announcement').classList.add('hidden');
+      document.getElementById('event').classList.add('hidden');
+      document.getElementById('club').classList.add('hidden');
+      document.getElementById('messages').classList.remove('hidden');
+    });
+
+    // Create Messages Section
+    const messagesSection = document.createElement('div');
+    messagesSection.id = "messages";
+    messagesSection.className = "hidden";
+    messagesSection.innerHTML = `
+      <h3 class="text-3xl font-bold mb-4">Real-Time Chat</h3>
+      <div id="chatBox" class="border h-64 overflow-y-scroll p-4 bg-white rounded mb-4"></div>
+      <div class="flex">
+        <input id="chatInput" type="text" placeholder="Type your message..." class="flex-grow p-3 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button id="sendMsgBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-r-md">Send</button>
+      </div>
+    `;
+    document.getElementById('mainContent').appendChild(messagesSection);
+
+    // Chat Logic
+    const chatBox = document.getElementById('chatBox');
+    const chatInput = document.getElementById('chatInput');
+    const sendMsgBtn = document.getElementById('sendMsgBtn');
+
+    const msgCollection = collection(db, "messages");
+
+    const renderMessage = (data) => {
+      const div = document.createElement('div');
+      const isAdmin = data.sender === "Admin";
+
+      div.classList.add('mb-2', 'flex', isAdmin ? 'justify-start' : 'justify-end');
+
+      const bubble = document.createElement('div');
+      bubble.classList.add(
+        'p-2', 'rounded', 'max-w-xs',
+        ...(isAdmin ? ['bg-gray-200', 'text-black'] : ['bg-blue-500', 'text-white'])
+      );
+      bubble.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
+      div.appendChild(bubble);
+      chatBox.appendChild(div);
+    };
+
+    onSnapshot(msgCollection, (snapshot) => {
+      chatBox.innerHTML = ''; // Clear the chat box
+      snapshot.docs
+        .sort((a, b) => a.data().timestamp - b.data().timestamp)
+        .forEach(doc => renderMessage(doc.data()));
+    });
+
+    // Send message event
+    sendMsgBtn.addEventListener('click', async () => {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      const user = auth.currentUser;
+      if (!user) return;
+
+      await addDoc(msgCollection, {
+        sender: "Admin", // or use user.email or uid for real users
+        text,
+        timestamp: serverTimestamp()
+      });
+
+      chatInput.value = '';
+    });
+
+    onSnapshot(msgCollection, (snapshot) => {
+      chatBox.innerHTML = '';
+
+      const sortedDocs = snapshot.docs
+        .filter(doc => doc.exists())
+        .sort((a, b) => a.data().timestamp?.seconds - b.data().timestamp?.seconds); // in case timestamp is missing
+
+      sortedDocs.forEach(doc => renderMessage(doc.data()));
+    });
+
+    
+  </script>
+
+</body>
+</html>
